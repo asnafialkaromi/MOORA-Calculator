@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOORA Decision Support System</title>
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
+        <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">MOORA Decision Support System</h1>
+
+        <!-- Add Criteria Section -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold mb-2">Add Criteria</h2>
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-sm font-medium">Criteria Name:</label>
+                    <input type="text" id="criteriaName" class="mt-1 p-2 border rounded w-full" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Weight:</label>
+                    <input type="number" id="criteriaWeight" step="0.1" class="mt-1 p-2 border rounded w-full" />
+                </div>
+                <div>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="criteriaIsBenefit" class="mr-2">
+                        Benefit?
+                    </label>
+                </div>
+                <button onclick="addCriteria()"
+                    class="mt-3 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add Criteria</button>
+            </div>
+            <ul id="criteriaList" class="mt-4 space-y-2"></ul>
+        </div>
+
+        <!-- Add Alternatives Section -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold mb-2">Add Alternative</h2>
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-sm font-medium">Alternative Name:</label>
+                    <input type="text" id="alternativeName" class="mt-1 p-2 border rounded w-full" />
+                </div>
+                <div id="alternativeScores" class="space-y-2 mt-2"></div>
+                <button onclick="addAlternative()"
+                    class="mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Add Alternative</button>
+            </div>
+            <ul id="alternativesList" class="mt-4 space-y-2"></ul>
+        </div>
+
+        <!-- Calculate and Display Rankings -->
+        <div class="text-center">
+            <button onclick="calculateMoora()"
+                class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">Calculate Rankings</button>
+        </div>
+        <h2 class="text-lg font-semibold mt-6">Rankings</h2>
+        <ol id="rankingsList" class="mt-4 space-y-2"></ol>
+    </div>
+
+    <script>
+        let criteria = [];
+        let alternatives = [];
+
+        function addCriteria() {
+            const name = document.getElementById('criteriaName').value;
+            const weight = parseFloat(document.getElementById('criteriaWeight').value);
+            const isBenefit = document.getElementById('criteriaIsBenefit').checked;
+
+            if (!name || isNaN(weight)) return alert("Please enter valid criteria details.");
+
+            criteria.push({ name, weight, isBenefit });
+            updateCriteriaList();
+            updateAlternativeScoresInput();
+        }
+
+        function deleteCriteria(index) {
+            criteria.splice(index, 1);
+            updateCriteriaList();
+            updateAlternativeScoresInput();
+        }
+
+        function updateCriteriaList() {
+            const list = document.getElementById('criteriaList');
+            list.innerHTML = criteria.map((c, idx) =>
+                `<li class="flex justify-between items-center bg-blue-50 p-3 rounded-lg shadow">
+          <span>${c.name} - Weight: ${c.weight} - ${c.isBenefit ? 'Benefit' : 'Cost'}</span>
+          <button onclick="deleteCriteria(${idx})" class="delete-button p-1 text-red-500 hover:text-red-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </li>`
+            ).join('');
+        }
+
+        function addAlternative() {
+            const name = document.getElementById('alternativeName').value;
+            if (!name) return alert("Please enter a valid alternative name.");
+
+            const scores = criteria.map((_, idx) => {
+                const score = parseFloat(document.getElementById(`score${idx}`).value);
+                if (isNaN(score)) alert("Please enter valid scores for all criteria.");
+                return score;
+            });
+
+            if (scores.includes(NaN)) return;
+
+            alternatives.push({ name, scores });
+            updateAlternativesList();
+        }
+
+        function deleteAlternative(index) {
+            alternatives.splice(index, 1);
+            updateAlternativesList();
+        }
+
+        function updateAlternativeScoresInput() {
+            const scoresDiv = document.getElementById('alternativeScores');
+            scoresDiv.innerHTML = criteria.map((c, idx) =>
+                `<label class="block text-sm font-medium">${c.name} Score:
+          <input type="number" id="score${idx}" class="mt-1 p-2 border rounded w-full" />
+        </label>`
+            ).join('');
+        }
+
+        function updateAlternativesList() {
+            const list = document.getElementById('alternativesList');
+            list.innerHTML = alternatives.map((a, idx) =>
+                `<li class="flex justify-between items-center bg-green-50 p-3 rounded-lg shadow">
+          <span>${a.name} - Scores: ${a.scores.join(', ')}</span>
+          <button onclick="deleteAlternative(${idx})" class="delete-button p-1 text-red-500 hover:text-red-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </li>`
+            ).join('');
+        }
+
+        function calculateMoora() {
+            const normalizedAlternatives = alternatives.map(alt => {
+                const normalizedScores = criteria.map((crit, idx) => {
+                    const sumSquares = Math.sqrt(alternatives.reduce((acc, alt) => acc + Math.pow(alt.scores[idx], 2), 0));
+                    return alt.scores[idx] / sumSquares;
+                });
+                return { ...alt, normalizedScores };
+            });
+
+            const rankings = normalizedAlternatives.map(alt => {
+                let score = 0;
+                criteria.forEach((crit, idx) => {
+                    const factor = crit.isBenefit ? 1 : -1;
+                    score += factor * crit.weight * alt.normalizedScores[idx];
+                });
+                return { name: alt.name, score };
+            });
+
+            rankings.sort((a, b) => b.score - a.score);
+
+            const rankingsList = document.getElementById('rankingsList');
+            rankingsList.innerHTML = rankings.map((r, idx) =>
+                `<li class="bg-purple-100 p-3 rounded-lg shadow flex justify-between items-center">
+          <span>${idx + 1}. ${r.name}</span>
+          <span class="font-semibold">Score: ${r.score.toFixed(2)}</span>
+        </li>`
+            ).join('');
+        }
+    </script>
+</body>
+
+</html>
